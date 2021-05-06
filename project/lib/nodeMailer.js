@@ -2,7 +2,7 @@ const nodemailer = require('nodemailer');
 const events = require('events');
 const emitter = new events.EventEmitter();
 
-module.exports = () => {
+module.exports = (receiveEmail) => {
   const transporter = nodemailer.createTransport({
     service: 'hotmail',
     host: 'smtp.office365.com',
@@ -20,7 +20,7 @@ const sendMail = (data) => {
   
   const email = {
     from: 'toshevaivana@outlook.com',
-    to: 'toshevaivana@outlook.com',
+    to: `${data.to}`,
     subject: `${data.subject}`,
     text: `${data.text}`
   };
@@ -41,7 +41,7 @@ emitter
 
 emitter.emit('blogPost_created', {
   from: 'toshevaivana@outlook.com',
-  to: 'toshevaivana@outlook.com',
+  to: `${receiveEmail}`,
   subject: 'New blog post!',
   text: 'This is content for the blog post created event.'
 })
