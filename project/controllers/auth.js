@@ -5,6 +5,8 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const cron = require('node-cron');
 const schedule = require('node-schedule')
+const nodemailer = require('../lib/nodeMailer');
+
 
 module.exports = {
   register: async (req, res) => {
@@ -87,6 +89,79 @@ module.exports = {
       res.send(`User ${req.params.id} is deleted`);
     } catch (error) {
       res.send({ message: error });
+    }
+  },
+  getAll: async (req, res) => {
+    try {
+      const users = await userModel.find()
+      successResponse(res, 'List of all users', users);
+    } catch (error) {
+      errorResponse(res, 500, error.message)
+    }
+  },
+  changePassword: async (req, res) => {
+    try {
+      const user = await userModel.findOne({ email: req.body.email });
+      if (!user) {
+        return errorResponse(res, 403, 'Forbidden');
+      }
+      if (!bcrypt.compareSync(req.body.password, user.password)) {
+        return errorResponse(res, 401, 'Unauthorized');
+      }
+
+      if (req.body.new_password === req.body.confirmation_password) {
+        req.body.password = req.body.new_password;
+      } else {
+        return errorResponse(res, 400, 'Passwords do not match');
+      }
+
+      req.body.password = bcrypt.hashSync(req.body.password);
+
+      const updateUser = await userModel.findByIdAndUpdate(user._id, req.body);
+      if (updateUser) {
+        return successResponse(res, 'Password is successfully changed');
+      }
+      return errorResponse(res, 404, 'Not Found');
+    } catch (err) {
+      return errorResponse(res, 500, 'Internal Server Error');
+    }
+  },
+  forgotPassword: async (req, res) => {
+    try {
+      const user = await userModel.findOne({ email: req.body.email });
+      if (!user) {
+        return errorResponse(res, 404, 'Not Found');
+      }
+
+      const getLink = await userModel.findByIdAndUpdate(user._id);
+      if (getLink) { nodemailer(req.user.email) };
+      return successResponse(res, 'Email has been send, kindly follow the instructions.');
+    } catch (err) {
+      return errorResponse(res, 500, 'Internal Server Error');
+    }
+  },
+  resetPassword: async (req, res) => {
+    try {
+      const user = await userModel.findOne({ email: req.body.email });
+      if (!user) {
+        return errorResponse(res, 403, 'Forbidden');
+      }
+    
+      if (req.body.new_password === req.body.confirmation_password) {
+        req.body.password = req.body.new_password;
+      } else {
+        return errorResponse(res, 400, 'Passwords do not match');
+      }
+
+      req.body.password = bcrypt.hashSync(req.body.password);
+
+      const updateUser = await userModel.findByIdAndUpdate(user._id, req.body);
+      if (updateUser) {
+        return successResponse(res, 'Password is successfully changed');
+      }
+      return errorResponse(res, 404, 'Not Found');
+    } catch (err) {
+      return errorResponse(res, 500, 'Internal Server Error');
     }
   }
 }

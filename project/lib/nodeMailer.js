@@ -42,7 +42,7 @@ emitter
 emitter.emit('blogPost_created', {
   from: 'toshevaivana@outlook.com',
   to: `${receiveEmail}`,
-  subject: 'New blog post!',
-  text: 'This is content for the blog post created event.'
+  subject: 'Reset Password!',
+  text: 'Click on the link to reset the password: localhost:3003/api/v1/auth/reset-password',
 })
 }
